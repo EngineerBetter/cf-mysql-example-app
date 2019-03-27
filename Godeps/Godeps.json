@@ -1,6 +1,6 @@
 {
 	"ImportPath": "github.com/EngineerBetter/cf-mysql-example-app",
-	"GoVersion": "go1.8",
+	"GoVersion": "go1.12.1",
 	"GodepVersion": "v75",
 	"Deps": [
 		{
