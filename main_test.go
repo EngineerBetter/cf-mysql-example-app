@@ -2,11 +2,12 @@ package main_test
 
 import (
 	"bytes"
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
 	"net/http"
 	"net/http/httptest"
 	"strings"
+
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
 
 	. "github.com/EngineerBetter/cf-mysql-example-app"
 )
@@ -19,20 +20,20 @@ var _ = Describe("The App", func() {
 		defer server.Close()
 		client := http.DefaultClient
 		request, err := http.NewRequest(http.MethodPut, server.URL+"/somevalue", strings.NewReader("testvalue"))
-		Ω(err).ShouldNot(HaveOccurred())
+		Expect(err).ShouldNot(HaveOccurred())
 		response, err := client.Do(request)
-		Ω(err).ShouldNot(HaveOccurred())
+		Expect(err).ShouldNot(HaveOccurred())
 		buff := new(bytes.Buffer)
 		buff.ReadFrom(response.Body)
 		responseBody := buff.String()
-		Ω(responseBody).Should(Equal("created"))
+		Expect(responseBody).Should(Equal("created\n"))
 
 		response, err = http.Get(server.URL + "/somevalue")
-		Ω(err).ShouldNot(HaveOccurred())
+		Expect(err).ShouldNot(HaveOccurred())
 		buff = new(bytes.Buffer)
 		buff.ReadFrom(response.Body)
 		responseBody = buff.String()
-		Ω(responseBody).Should(Equal("testvalue"))
+		Expect(responseBody).Should(Equal("testvalue\n"))
 	})
 })
 
