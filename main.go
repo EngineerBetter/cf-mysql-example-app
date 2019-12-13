@@ -40,17 +40,22 @@ func main() {
 	}
 }
 
+type Repository interface {
+	Write(key, value string) error
+	Read(key string) (string, error)
+}
+
 type PutGetHandler struct {
 	repo Repository
 }
 
 func NewPutGetHandler(repository Repository) http.Handler {
-	var h PutGetHandler
-	h.repo = repository
-	return &h
+	var handler PutGetHandler
+	handler.repo = repository
+	return &handler
 }
 
-func (h *PutGetHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (handler *PutGetHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	key := r.RequestURI
 
 	responseBody := "bad request"
@@ -61,7 +66,7 @@ func (h *PutGetHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		buff.ReadFrom(r.Body)
 		value := buff.String()
 
-		err := h.repo.Write(key, value)
+		err := handler.repo.Write(key, value)
 
 		if err != nil {
 			statusCode = http.StatusInternalServerError
@@ -71,7 +76,7 @@ func (h *PutGetHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			responseBody = "created"
 		}
 	} else if r.Method == http.MethodGet {
-		value, err := h.repo.Read(key)
+		value, err := handler.repo.Read(key)
 
 		if err != nil {
 			statusCode = http.StatusInternalServerError
@@ -89,9 +94,4 @@ func (h *PutGetHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(statusCode)
 	w.Write([]byte(responseBody + "\n"))
-}
-
-type Repository interface {
-	Write(key, value string) error
-	Read(key string) (string, error)
 }
