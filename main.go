@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"regexp"
 
 	"github.com/EngineerBetter/cf-mysql-example-app/mysql"
 	"github.com/cloudfoundry-community/go-cfenv"
@@ -56,7 +57,8 @@ func NewPutGetHandler(repository Repository) http.Handler {
 }
 
 func (handler *PutGetHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	key := r.RequestURI
+	re := regexp.MustCompile("^/")
+	key := re.ReplaceAllString(r.URL.Path, "")
 
 	responseBody := "bad request"
 	statusCode := http.StatusBadRequest
