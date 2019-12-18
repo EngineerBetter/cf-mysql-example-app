@@ -13,13 +13,23 @@ import (
 )
 
 var _ = Describe("The App", func() {
-	It("Does a thing", func() {
-		repo := NewInMemoryRepository()
-		handler := NewMysqlHandler(repo)
-		server := httptest.NewServer(handler)
-		defer server.Close()
-		client := http.DefaultClient
+	var repo InMemoryRepository
+	var handler http.Handler
+	var server *httptest.Server
+	var client *http.Client
 
+	BeforeEach(func() {
+		repo = NewInMemoryRepository()
+		handler = NewMysqlHandler(repo)
+		server = httptest.NewServer(handler)
+		client = http.DefaultClient
+	})
+
+	AfterEach(func() {
+		server.Close()
+	})
+
+	It("Can PUT, GET, and DELETE keys", func() {
 		request, err := http.NewRequest(http.MethodPut, server.URL+"/somevalue", strings.NewReader("testvalue"))
 		Expect(err).ShouldNot(HaveOccurred())
 		response, err := client.Do(request)
