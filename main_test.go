@@ -15,10 +15,11 @@ import (
 var _ = Describe("The App", func() {
 	It("Does a thing", func() {
 		repo := NewInMemoryRepository()
-		handler := NewPutGetHandler(repo)
+		handler := NewMysqlHandler(repo)
 		server := httptest.NewServer(handler)
 		defer server.Close()
 		client := http.DefaultClient
+
 		request, err := http.NewRequest(http.MethodPut, server.URL+"/somevalue", strings.NewReader("testvalue"))
 		Expect(err).ShouldNot(HaveOccurred())
 		response, err := client.Do(request)
@@ -34,6 +35,22 @@ var _ = Describe("The App", func() {
 		buff.ReadFrom(response.Body)
 		responseBody = buff.String()
 		Expect(responseBody).Should(Equal("testvalue\n"))
+
+		request, err = http.NewRequest(http.MethodDelete, server.URL+"/somevalue", nil)
+		Expect(err).ShouldNot(HaveOccurred())
+		response, err = client.Do(request)
+		Expect(err).ShouldNot(HaveOccurred())
+		buff = new(bytes.Buffer)
+		buff.ReadFrom(response.Body)
+		responseBody = buff.String()
+		Expect(responseBody).Should(Equal("deleted\n"))
+
+		response, err = http.Get(server.URL + "/somevalue")
+		Expect(err).ShouldNot(HaveOccurred())
+		buff = new(bytes.Buffer)
+		buff.ReadFrom(response.Body)
+		responseBody = buff.String()
+		Expect(responseBody).Should(Equal("key not found\n"))
 	})
 })
 
@@ -54,4 +71,9 @@ func (r InMemoryRepository) Write(key, value string) error {
 
 func (r InMemoryRepository) Read(key string) (string, error) {
 	return r.KeyValues[key], nil
+}
+
+func (r InMemoryRepository) Delete(key string) error {
+	delete(r.KeyValues, key)
+	return nil
 }

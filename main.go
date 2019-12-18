@@ -34,7 +34,7 @@ func main() {
 		log.Fatal("Could not start MySQLRepository:", err)
 	}
 
-	handler := NewPutGetHandler(repo)
+	handler := NewMysqlHandler(repo)
 	err = http.ListenAndServe(":"+os.Getenv("PORT"), handler)
 	if err != nil {
 		log.Fatal("ListenAndServe:", err)
@@ -44,19 +44,20 @@ func main() {
 type Repository interface {
 	Write(key, value string) error
 	Read(key string) (string, error)
+	Delete(key string) error
 }
 
-type PutGetHandler struct {
+type MysqlHandler struct {
 	repo Repository
 }
 
-func NewPutGetHandler(repository Repository) http.Handler {
-	var handler PutGetHandler
+func NewMysqlHandler(repository Repository) http.Handler {
+	var handler MysqlHandler
 	handler.repo = repository
 	return &handler
 }
 
-func (handler *PutGetHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (handler *MysqlHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	re := regexp.MustCompile("^/")
 	key := re.ReplaceAllString(r.URL.Path, "")
 
@@ -91,6 +92,16 @@ func (handler *PutGetHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 				statusCode = http.StatusOK
 				responseBody = value
 			}
+		}
+	} else if r.Method == http.MethodDelete {
+		err := handler.repo.Delete(key)
+
+		if err != nil {
+			statusCode = http.StatusInternalServerError
+			responseBody = err.Error()
+		} else {
+			statusCode = http.StatusOK
+			responseBody = "deleted"
 		}
 	}
 
