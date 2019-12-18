@@ -11,6 +11,16 @@ import (
 	"github.com/cloudfoundry-community/go-cfenv"
 )
 
+type Repository interface {
+	Write(key, value string) error
+	Read(key string) (string, error)
+	Delete(key string) (int64, error)
+}
+
+type MysqlHandler struct {
+	repo Repository
+}
+
 func main() {
 	appEnv, err := cfenv.Current()
 	if err != nil {
@@ -39,16 +49,6 @@ func main() {
 	if err != nil {
 		log.Fatal("ListenAndServe:", err)
 	}
-}
-
-type Repository interface {
-	Write(key, value string) error
-	Read(key string) (string, error)
-	Delete(key string) error
-}
-
-type MysqlHandler struct {
-	repo Repository
 }
 
 func NewMysqlHandler(repository Repository) http.Handler {
@@ -94,11 +94,14 @@ func (handler *MysqlHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	} else if r.Method == http.MethodDelete {
-		err := handler.repo.Delete(key)
+		rows, err := handler.repo.Delete(key)
 
 		if err != nil {
 			statusCode = http.StatusInternalServerError
 			responseBody = err.Error()
+		} else if rows == 0 {
+			statusCode = http.StatusTeapot
+			responseBody = "key not found so nothing was deleted \u2615"
 		} else {
 			statusCode = http.StatusOK
 			responseBody = "deleted"

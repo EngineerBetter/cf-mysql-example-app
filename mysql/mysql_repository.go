@@ -25,9 +25,14 @@ func (r MySQLRepository) Read(key string) (string, error) {
 	return payload, err
 }
 
-func (r MySQLRepository) Delete(key string) error {
-	_, err := r.db.Exec("DELETE FROM stuff WHERE id = ?", key)
-	return err
+func (r MySQLRepository) Delete(key string) (int64, error) {
+	result, err := r.db.Exec("DELETE FROM stuff WHERE id = ?", key)
+	rowsAffected, err1 := result.RowsAffected()
+	if err1 != nil {
+		return 0, err
+	} else {
+		return rowsAffected, err
+	}
 }
 
 func NewMySQLRepository(url string) (MySQLRepository, error) {
